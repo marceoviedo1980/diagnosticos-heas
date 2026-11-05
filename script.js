@@ -150,7 +150,7 @@ function tarjeta(item, terms, espFiltro) {
   AMBITOS.forEach((a) => {
     if (!porAmb.has(a.k)) return;
     const row = make("div", `amb-row amb-${a.k}`);
-    row.append(make("span", "amb-label", a.label));
+    row.append(make("span", "amb-label", "• " + a.label + ":"));
     [...new Set(porAmb.get(a.k))].sort((x, y) => x.localeCompare(y, "es")).forEach((e) => row.append(make("span", "tag", e)));
     blocks.append(row);
   });
