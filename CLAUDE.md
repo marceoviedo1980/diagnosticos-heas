@@ -14,7 +14,7 @@ código + grupo). `datos_heas.json` se **genera**; no se edita a mano.
 - Regenerar:  `python3 tools/generar_datos.py datos/fuente.csv datos_heas.json`
 - Subir ambos archivos a `main`. (Si solo se sube el CSV, la acción `.github/workflows/actualizar-datos.yml`
   regenera y publica el JSON sola.)
-- Un grupo nuevo hace que el script avise: añadirlo a `ESP` (ámbito + nombre de especialidad).
+- Un grupo mal escrito o nuevo hace que el script **falle** con un mensaje claro (así un error de tipeo no publica un servicio falso): corregir el texto o, si es un grupo nuevo, añadirlo a `ESP` (ámbito + nombre de especialidad).
 - Los datos nuevos tardan unos minutos en llegar a los celulares (la caché de GitHub raw).
 - NO hace falta tocar `sw.js` para cambios de datos; solo si cambian archivos de la app (subir `CACHE_NAME`).
 

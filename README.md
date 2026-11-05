@@ -16,7 +16,7 @@ Desarrollado por: Marcelo Oviedo Lazcano
 2. Agrega o borra filas con el formato `Descripción,Sigla,Grupo`, por ejemplo:
    `Linfoma de Hodgkin,C81,CE - HEMATOLOGIA - SUS`
 3. **Commit changes**. En 1 o 2 minutos una acción automática genera `datos_heas.json` y lo publica.
-   Si ves una ❌ en la pestaña **Actions**, abre el detalle: dice qué fila está incompleta.
+   Si ves una ❌ en la pestaña **Actions**, abre el detalle: dice qué fila está incompleta o qué grupo está mal escrito, y no se publica nada hasta corregirlo.
 4. La app muestra los datos nuevos pocos minutos después.
 
 Para un cambio grande: edita el CSV en Excel (guardar como *CSV UTF-8*) y súbelo con **Add file → Upload files**.

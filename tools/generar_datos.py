@@ -72,13 +72,9 @@ ESP = {
 
 def clasificar(grupo):
     g = re.sub(r"\s+", " ", str(grupo).strip())
-    if g in ESP:
-        return ESP[g]
-    # grupo nuevo: se deduce del prefijo y se avisa
-    a = CE if g.upper().startswith(("CE", "SUS - CE")) else HOSP if g.upper().startswith(("HOSP", "SUS - HOSP")) else APOYO
-    e = re.sub(r"^(SUS - )?(CE|HOSP)\s*-\s*", "", re.sub(r"\s*-\s*SUS$", "", g)).strip().capitalize()
-    print("AVISO: grupo nuevo sin clasificar, deducido:", repr(g), "->", a, e, file=sys.stderr)
-    return a, e
+    if g not in ESP:
+        raise KeyError(g)
+    return ESP[g]
 
 def leer_filas(src):
     if src.lower().endswith(".csv"):
@@ -100,17 +96,27 @@ def main(src, dst):
     if len(filas) < 1000:
         print(f"ERROR: solo {len(filas)} filas; el archivo parece incompleto y no se genera nada.", file=sys.stderr)
         sys.exit(1)
+    desconocidos = collections.Counter()
     servicios, indice = [], {}
     por_codigo = collections.OrderedDict()
     nombres = collections.defaultdict(collections.Counter)
     for desc, sigla, grupo in filas:
         sigla = re.sub(r"\s+", "", sigla).upper()
-        a, e = clasificar(grupo)
+        try:
+            a, e = clasificar(grupo)
+        except KeyError:
+            desconocidos[grupo] += 1
+            continue
         if (a, e) not in indice:
             indice[(a, e)] = len(servicios)
             servicios.append({"a": a, "e": e})
         por_codigo.setdefault(sigla, set()).add(indice[(a, e)])
         nombres[sigla][re.sub(r"\s+", " ", desc)] += 1
+    if desconocidos:
+        for g, n in desconocidos.items():
+            print(f"ERROR: grupo no reconocido {g!r} ({n} filas). Revise que esté escrito igual que los demás; "
+                  "si es un grupo nuevo, agréguelo a la tabla ESP de tools/generar_datos.py.", file=sys.stderr)
+        sys.exit(1)
     items = [[c, nombres[c].most_common(1)[0][0], sorted(g)] for c, g in por_codigo.items()]
     items.sort(key=lambda x: x[0])
     datos = {"version": datetime.date.today().isoformat(), "servicios": servicios, "items": items}
