@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buscador de Diagnósticos HEAS</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="description" content="Buscador de diagnósticos y procedimientos por servicio del Hospital El Alto Sur (HEAS)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Dx HEAS">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" href="icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <img class="brand-mark" src="icon-192.png" alt="Logo CIE 10 Diagnósticos - Hospital El Alto Sur" width="48" height="48">
+        <div>
+          <h1>Buscador de Diagnósticos</h1>
+          <p>Hospital El Alto Sur (HEAS)</p>
+          <p class="dev">Desarrollado por: Marcelo Oviedo Lazcano</p>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Cambiar modo claro u oscuro">
+        <span id="themeIcon">🌙</span>
+        <span id="themeLabel">OSC</span>
+      </button>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Secciones">
+    <button class="tab active" type="button" data-view="buscar" id="tabBuscar">🔍 Buscar</button>
+    <button class="tab" type="button" data-view="especialidad" id="tabEsp">🏥 Por especialidad</button>
+  </nav>
+
+  <main class="app-shell">
+    <!-- ===== VISTA BUSCAR ===== -->
+    <section id="viewBuscar" class="view">
+      <section class="panel" aria-label="Búsqueda">
+        <form class="search-form" id="searchForm" autocomplete="off">
+          <label for="searchInput">Buscar por diagnóstico, procedimiento o código</label>
+          <div class="search-row">
+            <div class="search-field">
+              <input id="searchInput" type="search" placeholder="Ej: asma, J45, apendicitis, ecografía…" enterkeyhint="search">
+              <button class="clear-button" id="clearButton" type="button" aria-label="Limpiar búsqueda">✕</button>
+            </div>
+            <button class="search-button" type="submit">Buscar</button>
+          </div>
+        </form>
+
+        <div class="recent-block" id="recentBlock" hidden>
+          <div class="section-title">Búsquedas recientes</div>
+          <div class="recent-list" id="recentList"></div>
+        </div>
+
+        <div class="switch" role="group" aria-label="Tipo de registro" id="tipoSwitch">
+          <button type="button" class="switch-opt active" data-tipo="dx">Diagnósticos</button>
+          <button type="button" class="switch-opt" data-tipo="pr">Procedimientos</button>
+        </div>
+
+        <div class="filters" aria-label="Filtrar por ámbito" id="ambitoFilters"></div>
+
+        <div class="select-row">
+          <label for="espSelect">Servicio / especialidad</label>
+          <select id="espSelect"><option value="">Todas las especialidades</option></select>
+        </div>
+      </section>
+
+      <section class="status-row" aria-live="polite">
+        <p id="resultCounter">Escriba un término o elija un filtro.</p>
+        <p id="dataStatus" class="data-status visible">Cargando datos…</p>
+      </section>
+
+      <section id="results" class="results" aria-label="Resultados"></section>
+      <button class="more-button" id="moreBuscar" type="button" hidden>Mostrar más resultados</button>
+    </section>
+
+    <!-- ===== VISTA POR ESPECIALIDAD ===== -->
+    <section id="viewEsp" class="view" hidden>
+      <section id="espGridWrap">
+        <p class="hint">Elija una especialidad para ver qué diagnósticos o procedimientos tiene habilitados en cada ámbito.</p>
+        <div id="espGrid" class="esp-grid"></div>
+      </section>
+
+      <section id="espDetail" hidden>
+        <button class="back-button" id="backEsp" type="button">← Todas las especialidades</button>
+        <h2 id="espTitle" class="esp-title"></h2>
+        <div class="tabs-amb" id="espAmbTabs" role="tablist"></div>
+
+        <div class="panel">
+          <div class="switch" role="group" aria-label="Tipo de registro" id="tipoSwitchEsp">
+            <button type="button" class="switch-opt active" data-tipo="dx">Diagnósticos</button>
+            <button type="button" class="switch-opt" data-tipo="pr">Procedimientos</button>
+          </div>
+          <div class="search-field wide">
+            <input id="espSearch" type="search" placeholder="Buscar dentro de esta especialidad…" autocomplete="off">
+            <button class="clear-button" id="espClear" type="button" aria-label="Limpiar">✕</button>
+          </div>
+          <div class="letters" id="espLetters" aria-label="Filtrar por letra del CIE-10"></div>
+        </div>
+
+        <p id="espCounter" class="counter"></p>
+        <section id="espResults" class="results"></section>
+        <button class="more-button" id="moreEsp" type="button" hidden>Mostrar más</button>
+      </section>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <span id="dataVersion"></span>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
