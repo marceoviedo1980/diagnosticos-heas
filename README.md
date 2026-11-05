@@ -12,15 +12,20 @@ Desarrollado por: Marcelo Oviedo Lazcano
 - `datos/fuente.csv` – fuente de los datos · `tools/generar_datos.py` – genera `datos_heas.json`
 
 ## Actualizar los datos (1 minuto, sin instalar nada)
-1. En GitHub abre `datos/fuente.csv` y pulsa el lápiz (editar). Funciona también desde el celular.
-2. Agrega o borra filas con el formato `Descripción,Sigla,Grupo`, por ejemplo:
-   `Linfoma de Hodgkin,C81,CE - HEMATOLOGIA - SUS`
+Los cambios del día a día se escriben en el archivo pequeño **`datos/cambios.csv`** (no se toca `fuente.csv`, que es grande).
+1. En GitHub abre `datos/cambios.csv` y pulsa el lápiz (editar). Funciona también desde el celular.
+2. Agrega una línea por cambio. Formato: `Accion,Descripción,Sigla,Grupo`
+   - Agregar un servicio a un código: `AGREGAR,,C81,CE - HEMATOLOGIA - SUS`
+   - Quitar un servicio de un código: `QUITAR,,C81,CE - RADIOTERAPIA - SUS`
+   - Quitar el código de TODOS los servicios: `QUITAR,,J45,` (grupo vacío)
+   - Código nuevo (hay que dar la descripción): `AGREGAR,Nombre del diagnóstico,Z99.9,CE - NEUROLOGÍA - SUS`
 3. **Commit changes**. En 1 o 2 minutos una acción automática genera `datos_heas.json` y lo publica.
-   Si ves una ❌ en la pestaña **Actions**, abre el detalle: dice qué fila está incompleta o qué grupo está mal escrito, y no se publica nada hasta corregirlo.
+   Si ves una ❌ en la pestaña **Actions**, abre el detalle: dice qué línea está mal (grupo mal escrito, acción
+   desconocida, descripción faltante) y no se publica nada hasta corregirlo.
 4. La app muestra los datos nuevos pocos minutos después.
 
-Para un cambio grande: edita el CSV en Excel (guardar como *CSV UTF-8*) y súbelo con **Add file → Upload files**.
-Uso local del generador: `python3 tools/generar_datos.py datos/fuente.csv datos_heas.json`.
+Los cambios se aplican en orden, de arriba hacia abajo, sobre `fuente.csv`. Se quedan escritos en el archivo
+(sirve de historial). Uso local: `python3 tools/generar_datos.py datos/fuente.csv datos_heas.json`.
 
 ## Publicar en GitHub Pages
 Settings → Pages → Branch `main` / carpeta `/ (root)`.

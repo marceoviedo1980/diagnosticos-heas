@@ -1,9 +1,9 @@
 name: Actualizar datos
-# Cuando se edita datos/fuente.csv, regenera datos_heas.json y lo publica en main.
+# Cuando se edita datos/cambios.csv o datos/fuente.csv, regenera datos_heas.json y lo publica en main.
 on:
   push:
     branches: [main]
-    paths: ["datos/fuente.csv"]
+    paths: ["datos/fuente.csv", "datos/cambios.csv"]
   workflow_dispatch:
 permissions:
   contents: write
@@ -23,5 +23,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add datos_heas.json
-          git commit -m "Datos: regenerado desde datos/fuente.csv"
+          git commit -m "Datos: regenerado (fuente.csv + cambios.csv)"
           git push

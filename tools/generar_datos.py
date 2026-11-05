@@ -5,7 +5,7 @@ Uso:  python3 tools/generar_datos.py datos/fuente.csv datos_heas.json
       (con .xlsx hace falta:  pip install openpyxl)
 Sale con error (codigo 1) si hay filas incompletas; avisa si aparece un grupo nuevo.
 """
-import sys, json, re, csv, collections, datetime
+import sys, os, json, re, csv, collections, datetime
 
 # grupo del sistema -> (ambito, especialidad a mostrar)
 CE, HOSP, EMERG, UTI, APOYO = "ce", "hosp", "emerg", "uti", "apoyo"
@@ -86,8 +86,44 @@ def leer_filas(src):
     ws = openpyxl.load_workbook(src, read_only=True, data_only=True).worksheets[0]
     return [tuple(str(c or "").strip() for c in r[:3]) for r in ws.iter_rows(min_row=2, values_only=True) if r and any(r[:3])]
 
+def aplicar_cambios(filas, ruta):
+    """datos/cambios.csv: Accion,Descripción,Sigla,Grupo   (Accion = AGREGAR o QUITAR). Se aplica en orden."""
+    if not os.path.exists(ruta):
+        return filas
+    with open(ruta, newline="", encoding="utf-8-sig") as f:
+        lector = csv.reader(f)
+        next(lector, None)
+        cambios = [[(c or "").strip() for c in r] + [""] * 4 for r in lector if any((c or "").strip() for c in r)]
+    filas = list(filas)
+    errores = []
+    for n, (acc, desc, sigla, grupo) in [(i + 2, c[:4]) for i, c in enumerate(cambios)]:
+        a = acc.upper()
+        s_ = re.sub(r"\s+", "", sigla).upper()
+        if a in ("AGREGAR", "AGREGA", "AÑADIR", "ANADIR", "ALTA"):
+            if not s_ or not grupo:
+                errores.append(f"cambios.csv fila {n}: AGREGAR necesita Sigla y Grupo"); continue
+            if not desc:  # si el código ya existe, se reutiliza su descripción
+                desc = next((f[0] for f in filas if re.sub(r"\s+", "", f[1]).upper() == s_), "")
+            if not desc:
+                errores.append(f"cambios.csv fila {n}: el código {s_} es nuevo; falta la Descripción"); continue
+            if not any(re.sub(r"\s+", "", f[1]).upper() == s_ and f[2] == grupo for f in filas):
+                filas.append((desc, s_, grupo))
+        elif a in ("QUITAR", "QUITA", "BORRAR", "ELIMINAR", "BAJA"):
+            antes = len(filas)
+            filas = [f for f in filas if not (re.sub(r"\s+", "", f[1]).upper() == s_ and (not grupo or f[2] == grupo))]
+            if len(filas) == antes:
+                print(f"AVISO cambios.csv fila {n}: no había {s_} / {grupo or '(todos los grupos)'} para quitar", file=sys.stderr)
+        else:
+            errores.append(f"cambios.csv fila {n}: Accion {acc!r} no reconocida (use AGREGAR o QUITAR)")
+    if errores:
+        for e in errores: print("ERROR:", e, file=sys.stderr)
+        sys.exit(1)
+    print(f"{len(cambios)} cambios aplicados desde cambios.csv")
+    return filas
+
 def main(src, dst):
     filas = leer_filas(src)
+    filas = aplicar_cambios(filas, os.path.join(os.path.dirname(os.path.abspath(src)), "cambios.csv"))
     malas = [(i + 2, f) for i, f in enumerate(filas) if not all(f)]
     if malas:
         for n, f in malas[:20]:
