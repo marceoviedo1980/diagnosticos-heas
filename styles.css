@@ -7,6 +7,8 @@
   --muted: #5d7a76;
   --border: #cfe3df;
   --shadow: 0 1px 3px rgba(15, 60, 55, .12);
+  --card-border: #8fb8b1;
+  --card-shadow: 0 2px 7px rgba(15, 60, 55, .20);
   --ce: #1668b7;      --ce-bg: #e3effb;
   --hosp: #0f8a4f;    --hosp-bg: #e0f4ea;
   --emerg: #c62828;   --emerg-bg: #fde6e6;
@@ -22,6 +24,8 @@ body.dark {
   --muted: #8fb0aa;
   --border: #25423e;
   --shadow: 0 1px 3px rgba(0, 0, 0, .5);
+  --card-border: #4a7a72;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, .6);
   --ce: #6cb4ff;     --ce-bg: #163250;
   --hosp: #4ade80;   --hosp-bg: #123b27;
   --emerg: #ff8a80;  --emerg-bg: #4a1c1c;
@@ -121,9 +125,9 @@ body.dark .filter-chip.active { color: #062421; }
 .counter { margin: 10px 4px 8px; font-size: 13px; color: var(--muted); }
 
 /* ---- tarjetas de resultado ---- */
-.results { display: flex; flex-direction: column; gap: 8px; }
+.results { display: flex; flex-direction: column; gap: 12px; }
 .result-card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow);
+  background: var(--surface); border: 1px solid var(--card-border); border-radius: 14px; box-shadow: var(--card-shadow);
   padding: 11px 12px; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: start;
 }
 .code-badge {
@@ -135,7 +139,7 @@ body.dark .code-badge { color: #062421; }
 body.dark .code-badge.pr { background: #94a3b8; }
 .service-name { margin: 2px 0 0; font-size: 15.5px; font-weight: 650; }
 mark { background: #fde68a; color: #1f2937; border-radius: 3px; padding: 0 1px; }
-.amb-blocks { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.amb-blocks { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; margin-top: 4px; padding-top: 9px; border-top: 1px solid var(--border); }
 .amb-row { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
 .amb-label { font-size: 11px; font-weight: 800; border-radius: 6px; padding: 3px 8px; text-transform: uppercase; letter-spacing: .3px; }
 .tag { font-size: 12.5px; border-radius: 999px; padding: 3px 9px; font-weight: 600; border: 1px solid transparent; }
