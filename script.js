@@ -5,7 +5,6 @@ const RAW_DATA_URL = "https://raw.githubusercontent.com/marceoviedo1980/" + REPO
 const LOCAL_DATA_URL = "datos_heas.json";
 const RECENT_KEY = "heasDxRecientes";
 const THEME_KEY = "heasDxTema";
-const INSTALL_KEY = "heasDxInstalarOculto";
 const PAGE = 60;
 
 const AMBITOS = [
@@ -358,10 +357,10 @@ function registrarSW() {
 /* ---------- aviso "Instalar" (igual que en la app de recetas) ---------- */
 let installPrompt = null;
 function yaInstalada() { return matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; }
-function avisoOculto() { const t = Number(safeGet(INSTALL_KEY, "0")); return t && Date.now() - t < 3 * 24 * 3600 * 1000; }
+let avisoCerrado = false; // la ✕ solo oculta el aviso mientras la página siga abierta
 window.addEventListener("beforeinstallprompt", (ev) => {
   ev.preventDefault(); installPrompt = ev;
-  if (!yaInstalada() && !avisoOculto()) el.installBar.hidden = false;
+  if (!yaInstalada() && !avisoCerrado) el.installBar.hidden = false;
 });
 el.installBtn.addEventListener("click", async () => {
   if (!installPrompt) return;
@@ -369,7 +368,7 @@ el.installBtn.addEventListener("click", async () => {
   try { await installPrompt.userChoice; } catch { /* cancelado */ }
   installPrompt = null; el.installBar.hidden = true;
 });
-el.installClose.addEventListener("click", () => { el.installBar.hidden = true; safeSet(INSTALL_KEY, String(Date.now())); });
+el.installClose.addEventListener("click", () => { el.installBar.hidden = true; avisoCerrado = true; });
 window.addEventListener("appinstalled", () => { installPrompt = null; el.installBar.hidden = true; });
 
 document.addEventListener("DOMContentLoaded", async () => {
