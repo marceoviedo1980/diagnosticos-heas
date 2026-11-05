@@ -5,6 +5,7 @@ const RAW_DATA_URL = "https://raw.githubusercontent.com/marceoviedo1980/" + REPO
 const LOCAL_DATA_URL = "datos_heas.json";
 const RECENT_KEY = "heasDxRecientes";
 const THEME_KEY = "heasDxTema";
+const INSTALL_KEY = "heasDxInstalarOculto";
 const PAGE = 60;
 
 const AMBITOS = [
@@ -36,6 +37,7 @@ const el = {
   espTitle: $("#espTitle"), espAmbTabs: $("#espAmbTabs"), tipoSwitchEsp: $("#tipoSwitchEsp"),
   espSearch: $("#espSearch"), espClear: $("#espClear"), espLetters: $("#espLetters"),
   espCounter: $("#espCounter"), espResults: $("#espResults"), moreEsp: $("#moreEsp"),
+  installBar: $("#installBar"), installBtn: $("#installBtn"), installClose: $("#installClose"),
   themeToggle: $("#themeToggle"), themeIcon: $("#themeIcon"), themeLabel: $("#themeLabel"), version: $("#dataVersion")
 };
 
@@ -352,6 +354,23 @@ function activarEventos() {
 function registrarSW() {
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch((e) => console.warn("SW no registrado", e));
 }
+
+/* ---------- aviso "Instalar" (igual que en la app de recetas) ---------- */
+let installPrompt = null;
+function yaInstalada() { return matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; }
+function avisoOculto() { const t = Number(safeGet(INSTALL_KEY, "0")); return t && Date.now() - t < 3 * 24 * 3600 * 1000; }
+window.addEventListener("beforeinstallprompt", (ev) => {
+  ev.preventDefault(); installPrompt = ev;
+  if (!yaInstalada() && !avisoOculto()) el.installBar.hidden = false;
+});
+el.installBtn.addEventListener("click", async () => {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  try { await installPrompt.userChoice; } catch { /* cancelado */ }
+  installPrompt = null; el.installBar.hidden = true;
+});
+el.installClose.addEventListener("click", () => { el.installBar.hidden = true; safeSet(INSTALL_KEY, String(Date.now())); });
+window.addEventListener("appinstalled", () => { installPrompt = null; el.installBar.hidden = true; });
 
 document.addEventListener("DOMContentLoaded", async () => {
   aplicarTema(safeGet(THEME_KEY, "light"));
