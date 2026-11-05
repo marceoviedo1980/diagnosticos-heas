@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Convierte el Excel de HEAS (Descripcion | Sigla | Grupo) en datos_heas.json.
+"""Genera datos_heas.json a partir de datos/fuente.csv (o un .xlsx), columnas: Descripcion | Sigla | Grupo.
 
-Uso:  python3 tools/excel_a_json.py RESULTADO.xlsx datos_heas.json
-Requiere:  pip install openpyxl
+Uso:  python3 tools/generar_datos.py datos/fuente.csv datos_heas.json
+      (con .xlsx hace falta:  pip install openpyxl)
+Sale con error (codigo 1) si hay filas incompletas; avisa si aparece un grupo nuevo.
 """
-import sys, json, re, collections, datetime
-import openpyxl
+import sys, json, re, csv, collections, datetime
 
 # grupo del sistema -> (ambito, especialidad a mostrar)
 CE, HOSP, EMERG, UTI, APOYO = "ce", "hosp", "emerg", "uti", "apoyo"
@@ -80,20 +80,37 @@ def clasificar(grupo):
     print("AVISO: grupo nuevo sin clasificar, deducido:", repr(g), "->", a, e, file=sys.stderr)
     return a, e
 
-def main(src, dst):
+def leer_filas(src):
+    if src.lower().endswith(".csv"):
+        with open(src, newline="", encoding="utf-8-sig") as f:
+            lector = csv.reader(f)
+            next(lector, None)  # encabezado
+            return [tuple((c or "").strip() for c in r[:3]) + ("",) * (3 - len(r[:3])) for r in lector if any((c or "").strip() for c in r)]
+    import openpyxl
     ws = openpyxl.load_workbook(src, read_only=True, data_only=True).worksheets[0]
-    filas = [r for r in ws.iter_rows(min_row=2, values_only=True) if r and r[1]]
+    return [tuple(str(c or "").strip() for c in r[:3]) for r in ws.iter_rows(min_row=2, values_only=True) if r and any(r[:3])]
+
+def main(src, dst):
+    filas = leer_filas(src)
+    malas = [(i + 2, f) for i, f in enumerate(filas) if not all(f)]
+    if malas:
+        for n, f in malas[:20]:
+            print(f"ERROR fila {n}: incompleta {f}", file=sys.stderr)
+        sys.exit(1)
+    if len(filas) < 1000:
+        print(f"ERROR: solo {len(filas)} filas; el archivo parece incompleto y no se genera nada.", file=sys.stderr)
+        sys.exit(1)
     servicios, indice = [], {}
     por_codigo = collections.OrderedDict()
     nombres = collections.defaultdict(collections.Counter)
     for desc, sigla, grupo in filas:
-        sigla = re.sub(r"\s+", "", str(sigla)).upper()
+        sigla = re.sub(r"\s+", "", sigla).upper()
         a, e = clasificar(grupo)
         if (a, e) not in indice:
             indice[(a, e)] = len(servicios)
             servicios.append({"a": a, "e": e})
         por_codigo.setdefault(sigla, set()).add(indice[(a, e)])
-        nombres[sigla][re.sub(r"\s+", " ", str(desc or "").strip())] += 1
+        nombres[sigla][re.sub(r"\s+", " ", desc)] += 1
     items = [[c, nombres[c].most_common(1)[0][0], sorted(g)] for c, g in por_codigo.items()]
     items.sort(key=lambda x: x[0])
     datos = {"version": datetime.date.today().isoformat(), "servicios": servicios, "items": items}

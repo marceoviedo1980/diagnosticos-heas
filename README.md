@@ -9,14 +9,18 @@ Desarrollado por: Marcelo Oviedo Lazcano
 - `index.html`, `styles.css`, `script.js` – la aplicación
 - `datos_heas.json` – los datos (se genera desde el Excel)
 - `sw.js`, `manifest.json`, `icon-*.png` – funcionamiento sin conexión e instalación en el celular
-- `tools/excel_a_json.py` – convierte el Excel en `datos_heas.json`
+- `datos/fuente.csv` – fuente de los datos · `tools/generar_datos.py` – genera `datos_heas.json`
 
-## Actualizar los datos
-1. Excel con 3 columnas: Descripción | Sigla | Grupo.
-2. `pip install openpyxl`
-3. `python3 tools/excel_a_json.py MI_EXCEL.xlsx datos_heas.json`
-4. Subir `datos_heas.json` al repositorio (rama `main`). La app lo descarga de GitHub al abrirse.
-   Si aparece un grupo nuevo, el script avisa para agregarlo a la tabla `ESP` del mismo archivo.
+## Actualizar los datos (1 minuto, sin instalar nada)
+1. En GitHub abre `datos/fuente.csv` y pulsa el lápiz (editar). Funciona también desde el celular.
+2. Agrega o borra filas con el formato `Descripción,Sigla,Grupo`, por ejemplo:
+   `Linfoma de Hodgkin,C81,CE - HEMATOLOGIA - SUS`
+3. **Commit changes**. En 1 o 2 minutos una acción automática genera `datos_heas.json` y lo publica.
+   Si ves una ❌ en la pestaña **Actions**, abre el detalle: dice qué fila está incompleta.
+4. La app muestra los datos nuevos pocos minutos después.
+
+Para un cambio grande: edita el CSV en Excel (guardar como *CSV UTF-8*) y súbelo con **Add file → Upload files**.
+Uso local del generador: `python3 tools/generar_datos.py datos/fuente.csv datos_heas.json`.
 
 ## Publicar en GitHub Pages
 Settings → Pages → Branch `main` / carpeta `/ (root)`.
