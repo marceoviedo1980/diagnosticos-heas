@@ -15,6 +15,15 @@
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="icon" href="icon-192.png">
   <link rel="stylesheet" href="styles.css">
+  <!-- Google Analytics 4 (propiedad PWAs Farmacia) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TC780WL98K"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('set', { hospital: 'HEAS', app_nombre: 'Diagnosticos HEAS' });
+    gtag('config', 'G-TC780WL98K');
+  </script>
 </head>
 <body>
   <header class="app-header">
