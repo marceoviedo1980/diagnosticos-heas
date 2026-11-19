@@ -1,6 +1,6 @@
 // Caché propia de esta app (nombre distinto al de otras PWA del mismo usuario de GitHub)
-const CACHE_NAME = "heas-dx-v4";
-const APP_SHELL = ["./", "./index.html", "./styles.css", "./script.js", "./manifest.json", "./datos_heas.json", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png"];
+const CACHE_NAME = "heas-dx-v5";
+const APP_SHELL = ["./", "./index.html", "./styles.css?v=5", "./script.js?v=5", "./manifest.json", "./datos_heas.json", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png"];
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -22,7 +22,7 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: "no-cache" })
       .then((resp) => {
         const copia = resp.clone();
         caches.open(CACHE_NAME).then((c) => c.put(event.request, copia)).catch(() => {});
