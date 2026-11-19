@@ -202,3 +202,42 @@ body.dark .letter.active { color: #062421; }
 body.dark .install-bar { background: #3a3210; border-color: #6b5b16; color: #ffe9a0; }
 body.dark .install-btn { color: #062421; }
 @media (max-width: 780px) { .install-bar { margin: 10px 12px 0; } }
+
+/* ---- campanita de novedades ---- */
+.header-actions { display: flex; align-items: center; gap: 8px; }
+.bell-btn {
+  position: relative; border: 1.5px solid rgba(255,255,255,.55); background: rgba(255,255,255,.14); color: #fff;
+  border-radius: 12px; width: 44px; height: 44px; font-size: 21px; cursor: pointer; display: grid; place-items: center; padding: 0;
+}
+.bell-btn.has-new .bell-icon { display: inline-block; animation: campana 1.8s ease-in-out infinite; transform-origin: 50% 10%; }
+@keyframes campana { 0%, 60%, 100% { transform: rotate(0); } 10% { transform: rotate(16deg); } 20% { transform: rotate(-14deg); } 30% { transform: rotate(10deg); } 40% { transform: rotate(-8deg); } 50% { transform: rotate(4deg); } }
+@media (prefers-reduced-motion: reduce) { .bell-btn.has-new .bell-icon { animation: none; } }
+.bell-badge {
+  position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px;
+  background: #e53935; color: #fff; font-size: 12px; font-weight: 800; display: grid; place-items: center; border: 2px solid var(--primary);
+}
+body.dark .bell-badge { border-color: #0f3b36; }
+.nov-overlay { position: fixed; inset: 0; z-index: 50; background: rgba(5, 20, 18, .55); display: flex; align-items: flex-start; justify-content: center; padding: 56px 12px 12px; }
+.nov-overlay[hidden] { display: none; }
+.nov-panel {
+  width: 100%; max-width: 560px; max-height: 100%; overflow: auto; background: var(--bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.35); padding: 14px;
+}
+.nov-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.nov-head h2 { margin: 0; font-size: 19px; }
+.nov-close { border: 0; background: var(--surface); color: var(--muted); width: 34px; height: 34px; border-radius: 10px; font-size: 16px; cursor: pointer; border: 1px solid var(--border); }
+.nov-sub { margin: 6px 0 10px; font-size: 13px; color: var(--muted); }
+.nov-list { display: flex; flex-direction: column; gap: 8px; }
+.nov-date { font-size: 12px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 6px; }
+.nov-card {
+  text-align: left; font: inherit; color: inherit; cursor: pointer; width: 100%; display: flex; flex-direction: column; gap: 6px;
+  background: var(--surface); border: 1px solid var(--card-border); border-left: 5px solid var(--hosp); border-radius: 12px; padding: 10px 12px; box-shadow: var(--shadow);
+}
+.nov-card.baja { border-left-color: var(--emerg); }
+.nov-card.nueva { box-shadow: 0 0 0 2px var(--primary); }
+.nov-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.nov-tag { font-size: 13px; font-weight: 800; }
+.nov-card.alta .nov-tag { color: var(--hosp); } .nov-card.baja .nov-tag { color: var(--emerg); }
+.nov-new { margin-left: auto; background: #e53935; color: #fff; font-size: 11px; font-weight: 800; border-radius: 999px; padding: 2px 8px; }
+.nov-card .service-name { margin: 0; }
+body.nov-open { overflow: hidden; }

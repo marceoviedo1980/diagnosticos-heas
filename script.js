@@ -5,6 +5,7 @@ const RAW_DATA_URL = "https://raw.githubusercontent.com/marceoviedo1980/" + REPO
 const LOCAL_DATA_URL = "datos_heas.json";
 const RECENT_KEY = "heasDxRecientes";
 const THEME_KEY = "heasDxTema";
+const NOV_KEY = "heasDxNovVistas";
 const PAGE = 60;
 
 const AMBITOS = [
@@ -18,6 +19,7 @@ const AMB = Object.fromEntries(AMBITOS.map((a) => [a.k, a]));
 
 let servicios = [];   // [{a, e}]
 let items = [];       // {c, n, g[], t, h, l}
+let novedades = [];   // [{f, t:"alta"|"baja", c, n, a, e}]
 let state = {
   tipo: "dx", ambito: "", esp: "", query: "", shown: PAGE,
   eView: null, eAmb: "", eTipo: "dx", eQuery: "", eLetter: "", eShown: PAGE
@@ -37,6 +39,7 @@ const el = {
   espSearch: $("#espSearch"), espClear: $("#espClear"), espLetters: $("#espLetters"),
   espCounter: $("#espCounter"), espResults: $("#espResults"), moreEsp: $("#moreEsp"),
   installBar: $("#installBar"), installBtn: $("#installBtn"), installClose: $("#installClose"),
+  bellBtn: $("#bellBtn"), bellBadge: $("#bellBadge"), novOverlay: $("#novOverlay"), novList: $("#novList"), novClose: $("#novClose"),
   themeToggle: $("#themeToggle"), themeIcon: $("#themeIcon"), themeLabel: $("#themeLabel"), version: $("#dataVersion")
 };
 
@@ -82,6 +85,7 @@ function prepararDatos(json) {
   items = json.items.map(([c, n, g]) => ({
     c, n, g, t: esCodigoDx(c) ? "dx" : "pr", h: normalize(c + " " + n), l: c[0], s: normalize(n).replace(/^[^a-z0-9]+/, "")
   }));
+  novedades = Array.isArray(json.novedades) ? json.novedades : [];
   el.version.textContent = `Datos actualizados: ${json.version} · ${items.length.toLocaleString("es")} registros`;
 }
 async function cargarDatos() {
@@ -98,6 +102,53 @@ async function cargarDatos() {
   el.dataStatus.textContent = "No se pudieron cargar los datos. Recargue la página.";
   el.dataStatus.classList.add("visible");
   return false;
+}
+
+/* ---------- novedades (campanita) ---------- */
+const novClave = (n) => [n.f, n.t, n.c, n.a, n.e].join("|");
+function novVistas() { try { return new Set(JSON.parse(safeGet(NOV_KEY, "[]"))); } catch { return new Set(); } }
+function fechaLarga(f) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(f); if (!m) return f;
+  return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric" });
+}
+function actualizarCampana() {
+  const vistas = novVistas();
+  const nuevas = novedades.filter((n) => !vistas.has(novClave(n))).length;
+  el.bellBadge.hidden = nuevas === 0; el.bellBadge.textContent = nuevas > 9 ? "9+" : String(nuevas);
+  el.bellBtn.classList.toggle("has-new", nuevas > 0);
+  el.bellBtn.setAttribute("aria-label", nuevas ? `Novedades: ${nuevas} nueva${nuevas === 1 ? "" : "s"}` : "Novedades");
+}
+function abrirNovedades() {
+  const vistas = novVistas();
+  el.novList.innerHTML = "";
+  if (!novedades.length) el.novList.append(make("div", "empty-state", "Por ahora no hay novedades."));
+  let fechaPrev = "";
+  novedades.forEach((n) => {
+    if (n.f !== fechaPrev) { el.novList.append(make("div", "nov-date", fechaLarga(n.f))); fechaPrev = n.f; }
+    const alta = n.t !== "baja";
+    const card = make("button", `nov-card ${alta ? "alta" : "baja"}${vistas.has(novClave(n)) ? "" : " nueva"}`); card.type = "button";
+    const top = make("div", "nov-top");
+    top.append(make("span", "nov-tag", alta ? "✅ Habilitado" : "🚫 Retirado"), make("span", "code-badge" + (esCodigoDx(n.c) ? "" : " pr"), n.c));
+    if (!vistas.has(novClave(n))) top.append(make("span", "nov-new", "NUEVO"));
+    card.append(top, make("p", "service-name", n.n));
+    const row = make("div", `amb-row amb-${n.a}`);
+    row.append(make("span", "amb-label", "• " + (AMB[n.a] ? AMB[n.a].label : n.a) + ":"), make("span", "tag", n.e));
+    card.append(row);
+    card.addEventListener("click", () => buscarDesdeNovedad(n));
+    el.novList.append(card);
+  });
+  el.novOverlay.hidden = false; document.body.classList.add("nov-open");
+  safeSet(NOV_KEY, JSON.stringify([...new Set([...novedades.map(novClave), ...vistas])].slice(0, 200)));
+  actualizarCampana();
+}
+function cerrarNovedades() { el.novOverlay.hidden = true; document.body.classList.remove("nov-open"); }
+function buscarDesdeNovedad(n) {
+  cerrarNovedades(); cambiarVista("buscar");
+  state.tipo = esCodigoDx(n.c) ? "dx" : "pr";
+  [...el.tipoSwitch.children].forEach((c) => c.classList.toggle("active", c.dataset.tipo === state.tipo));
+  state.ambito = ""; state.esp = ""; el.espSelect.value = "";
+  [...el.ambitoFilters.children].forEach((c, i) => c.classList.toggle("active", i === 0));
+  el.input.value = n.c; state.query = n.c; renderBuscar();
 }
 
 /* ---------- consulta ---------- */
@@ -348,6 +399,10 @@ function activarEventos() {
   el.espSearch.addEventListener("input", () => { state.eQuery = el.espSearch.value; state.eShown = PAGE; renderEsp(); });
   el.espClear.addEventListener("click", () => { el.espSearch.value = ""; state.eQuery = ""; state.eShown = PAGE; renderEsp(); });
   el.moreEsp.addEventListener("click", () => { state.eShown += PAGE; renderEsp(); });
+  el.bellBtn.addEventListener("click", abrirNovedades);
+  el.novClose.addEventListener("click", cerrarNovedades);
+  el.novOverlay.addEventListener("click", (ev) => { if (ev.target === el.novOverlay) cerrarNovedades(); });
+  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape" && !el.novOverlay.hidden) cerrarNovedades(); });
   el.themeToggle.addEventListener("click", () => aplicarTema(document.body.classList.contains("dark") ? "light" : "dark"));
 }
 function registrarSW() {
@@ -374,5 +429,5 @@ window.addEventListener("appinstalled", () => { installPrompt = null; el.install
 document.addEventListener("DOMContentLoaded", async () => {
   aplicarTema(safeGet(THEME_KEY, "light"));
   activarEventos(); renderRecientes(); registrarSW();
-  if (await cargarDatos()) { construirFiltros(); renderBuscar(); }
+  if (await cargarDatos()) { construirFiltros(); renderBuscar(); actualizarCampana(); }
 });

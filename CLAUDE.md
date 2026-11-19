@@ -7,11 +7,13 @@ Usa el término **Procedimientos** (no "prestaciones"). Responder siempre en esp
 
 ## Cómo se actualizan los datos (lo más frecuente)
 Fuente: **`datos/fuente.csv`** (base, columnas `Descripción,Sigla,Grupo`, una fila por código + grupo) más
-**`datos/cambios.csv`** (ajustes del día a día: `Accion,Descripción,Sigla,Grupo`, con `AGREGAR` o `QUITAR`, aplicados
+**`datos/cambios.csv`** (ajustes del día a día: `Accion,Descripción,Sigla,Grupo,Fecha`, con `AGREGAR` o `QUITAR`, aplicados
 en orden sobre la base). `datos_heas.json` se **genera**; no se edita a mano.
 - Para un pedido nuevo ("agregar C81 a CE Hematología"): añadir una línea a `datos/cambios.csv`
   (`AGREGAR,,C81,CE - HEMATOLOGIA - SUS`). `QUITAR,,J45,` sin grupo quita el código de todos los servicios.
   Un código que no existe necesita Descripción (tal como figura en el sistema del hospital).
+- La columna `Fecha` (AAAA-MM-DD) es opcional: con fecha, el cambio sale en la campanita 🔔 de Novedades (se guarda en `novedades` de
+  `datos_heas.json`, máx. 30, más recientes primero). En la app lo ya visto se recuerda en `heasDxNovVistas`. Para pedidos nuevos, poner siempre la fecha del día.
 - El nombre del grupo debe ser EXACTO (tabla `ESP` en `tools/generar_datos.py`).
 - Regenerar: `python3 tools/generar_datos.py datos/fuente.csv datos_heas.json`; subir CSV y JSON a `main`.
   Si solo se sube un CSV, la acción `.github/workflows/actualizar-datos.yml` regenera y publica el JSON sola.

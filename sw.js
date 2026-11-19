@@ -1,5 +1,5 @@
 // Caché propia de esta app (nombre distinto al de otras PWA del mismo usuario de GitHub)
-const CACHE_NAME = "heas-dx-v3";
+const CACHE_NAME = "heas-dx-v4";
 const APP_SHELL = ["./", "./index.html", "./styles.css", "./script.js", "./manifest.json", "./datos_heas.json", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png"];
 
 self.addEventListener("install", (event) => {

@@ -36,10 +36,16 @@
           <p class="dev">Desarrollado por: Marcelo Oviedo Lazcano</p>
         </div>
       </div>
+      <div class="header-actions">
+      <button class="bell-btn" id="bellBtn" type="button" aria-label="Novedades" aria-haspopup="dialog">
+        <span class="bell-icon">🔔</span>
+        <span class="bell-badge" id="bellBadge" hidden>0</span>
+      </button>
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Cambiar modo claro u oscuro">
         <span id="themeIcon">🌙</span>
         <span id="themeLabel">OSC</span>
       </button>
+      </div>
     </div>
   </header>
 
@@ -130,6 +136,18 @@
   <footer class="app-footer">
     <span id="dataVersion"></span>
   </footer>
+
+  <!-- ===== NOVEDADES (campanita) ===== -->
+  <div class="nov-overlay" id="novOverlay" hidden>
+    <section class="nov-panel" role="dialog" aria-modal="true" aria-labelledby="novTitle">
+      <div class="nov-head">
+        <h2 id="novTitle">🔔 Novedades</h2>
+        <button class="nov-close" id="novClose" type="button" aria-label="Cerrar">✕</button>
+      </div>
+      <p class="nov-sub">Diagnósticos y procedimientos habilitados o retirados en los servicios. Toque uno para buscarlo.</p>
+      <div class="nov-list" id="novList"></div>
+    </section>
+  </div>
 
   <script src="script.js"></script>
 </body>

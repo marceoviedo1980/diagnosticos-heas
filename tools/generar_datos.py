@@ -87,16 +87,19 @@ def leer_filas(src):
     return [tuple(str(c or "").strip() for c in r[:3]) for r in ws.iter_rows(min_row=2, values_only=True) if r and any(r[:3])]
 
 def aplicar_cambios(filas, ruta):
-    """datos/cambios.csv: Accion,Descripción,Sigla,Grupo   (Accion = AGREGAR o QUITAR). Se aplica en orden."""
+    """datos/cambios.csv: Accion,Descripción,Sigla,Grupo[,Fecha]  (Accion = AGREGAR o QUITAR). Se aplica en orden.
+    Si la fila trae Fecha (AAAA-MM-DD) aparece como novedad en la campanita de la app.
+    Devuelve (filas, novedades)."""
+    novedades = []
     if not os.path.exists(ruta):
-        return filas
+        return filas, novedades
     with open(ruta, newline="", encoding="utf-8-sig") as f:
         lector = csv.reader(f)
         next(lector, None)
-        cambios = [[(c or "").strip() for c in r] + [""] * 4 for r in lector if any((c or "").strip() for c in r)]
+        cambios = [[(c or "").strip() for c in r] + [""] * 5 for r in lector if any((c or "").strip() for c in r)]
     filas = list(filas)
     errores = []
-    for n, (acc, desc, sigla, grupo) in [(i + 2, c[:4]) for i, c in enumerate(cambios)]:
+    for n, (acc, desc, sigla, grupo, fecha) in [(i + 2, c[:5]) for i, c in enumerate(cambios)]:
         a = acc.upper()
         s_ = re.sub(r"\s+", "", sigla).upper()
         if a in ("AGREGAR", "AGREGA", "AÑADIR", "ANADIR", "ALTA"):
@@ -108,8 +111,13 @@ def aplicar_cambios(filas, ruta):
                 errores.append(f"cambios.csv fila {n}: el código {s_} es nuevo; falta la Descripción"); continue
             if not any(re.sub(r"\s+", "", f[1]).upper() == s_ and f[2] == grupo for f in filas):
                 filas.append((desc, s_, grupo))
+                if fecha: novedades.append(("alta", fecha, s_, desc, grupo, n))
         elif a in ("QUITAR", "QUITA", "BORRAR", "ELIMINAR", "BAJA"):
             antes = len(filas)
+            if fecha:
+                _d = next((f[0] for f in filas if re.sub(r"\s+", "", f[1]).upper() == s_), "")
+                for g_ in sorted({f[2] for f in filas if re.sub(r"\s+", "", f[1]).upper() == s_ and (not grupo or f[2] == grupo)}):
+                    novedades.append(("baja", fecha, s_, _d, g_, n))
             filas = [f for f in filas if not (re.sub(r"\s+", "", f[1]).upper() == s_ and (not grupo or f[2] == grupo))]
             if len(filas) == antes:
                 print(f"AVISO cambios.csv fila {n}: no había {s_} / {grupo or '(todos los grupos)'} para quitar", file=sys.stderr)
@@ -119,11 +127,11 @@ def aplicar_cambios(filas, ruta):
         for e in errores: print("ERROR:", e, file=sys.stderr)
         sys.exit(1)
     print(f"{len(cambios)} cambios aplicados desde cambios.csv")
-    return filas
+    return filas, novedades
 
 def main(src, dst):
     filas = leer_filas(src)
-    filas = aplicar_cambios(filas, os.path.join(os.path.dirname(os.path.abspath(src)), "cambios.csv"))
+    filas, novedades = aplicar_cambios(filas, os.path.join(os.path.dirname(os.path.abspath(src)), "cambios.csv"))
     malas = [(i + 2, f) for i, f in enumerate(filas) if not all(f)]
     if malas:
         for n, f in malas[:20]:
@@ -155,10 +163,18 @@ def main(src, dst):
         sys.exit(1)
     items = [[c, nombres[c].most_common(1)[0][0], sorted(g)] for c, g in por_codigo.items()]
     items.sort(key=lambda x: x[0])
-    datos = {"version": datetime.date.today().isoformat(), "servicios": servicios, "items": items}
+    nov = []
+    for acc, fecha, sigla, desc, grupo, _n in novedades:
+        try:
+            a, e = clasificar(grupo)
+        except KeyError:
+            continue  # el error de grupo ya se informa más arriba
+        nov.append({"f": fecha, "t": acc, "c": sigla, "n": nombres[sigla].most_common(1)[0][0] if nombres.get(sigla) else desc, "a": a, "e": e})
+    nov.sort(key=lambda x: x["f"], reverse=True)  # más recientes primero (orden estable)
+    datos = {"version": datetime.date.today().isoformat(), "servicios": servicios, "items": items, "novedades": nov[:30]}
     with open(dst, "w", encoding="utf-8") as f:
         json.dump(datos, f, ensure_ascii=False, separators=(",", ":"))
-    print(f"{len(filas)} filas -> {len(items)} códigos, {len(servicios)} servicios -> {dst}")
+    print(f"{len(filas)} filas -> {len(items)} códigos, {len(servicios)} servicios, {len(nov)} novedades -> {dst}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
