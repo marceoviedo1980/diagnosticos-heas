@@ -111,7 +111,13 @@ def aplicar_cambios(filas, ruta):
                 errores.append(f"cambios.csv fila {n}: el código {s_} es nuevo; falta la Descripción"); continue
             if not any(re.sub(r"\s+", "", f[1]).upper() == s_ and f[2] == grupo for f in filas):
                 filas.append((desc, s_, grupo))
-                if fecha: novedades.append(("alta", fecha, s_, desc, grupo, n))
+            # con fecha se anuncia aunque la base ya lo traiga (p. ej. tras una actualización completa de fuente.csv)
+            if fecha: novedades.append(("alta", fecha, s_, desc, grupo, n))
+        elif a == "AVISO":
+            # aviso general en la campanita: AVISO,Mensaje,,,Fecha  (no cambia los datos)
+            if not desc or not fecha:
+                errores.append(f"cambios.csv fila {n}: AVISO necesita el mensaje (columna Descripción) y la Fecha"); continue
+            novedades.append(("info", fecha, "", desc, "", n))
         elif a in ("QUITAR", "QUITA", "BORRAR", "ELIMINAR", "BAJA"):
             antes = len(filas)
             if fecha:
@@ -122,7 +128,7 @@ def aplicar_cambios(filas, ruta):
             if len(filas) == antes:
                 print(f"AVISO cambios.csv fila {n}: no había {s_} / {grupo or '(todos los grupos)'} para quitar", file=sys.stderr)
         else:
-            errores.append(f"cambios.csv fila {n}: Accion {acc!r} no reconocida (use AGREGAR o QUITAR)")
+            errores.append(f"cambios.csv fila {n}: Accion {acc!r} no reconocida (use AGREGAR, QUITAR o AVISO)")
     if errores:
         for e in errores: print("ERROR:", e, file=sys.stderr)
         sys.exit(1)
@@ -165,6 +171,9 @@ def main(src, dst):
     items.sort(key=lambda x: x[0])
     nov = []
     for acc, fecha, sigla, desc, grupo, _n in novedades:
+        if acc == "info":
+            nov.append({"f": fecha, "t": "info", "n": desc})
+            continue
         try:
             a, e = clasificar(grupo)
         except KeyError:

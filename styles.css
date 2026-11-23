@@ -236,6 +236,8 @@ body.dark .bell-badge { border-color: #0f3b36; }
   background: var(--surface); border: 1px solid var(--card-border); border-left: 5px solid var(--hosp); border-radius: 12px; padding: 10px 12px; box-shadow: var(--shadow);
 }
 .nov-card.baja { border-left-color: var(--emerg); }
+.nov-card.info { border-left-color: var(--primary); cursor: default; }
+.nov-card.info .nov-tag { color: var(--primary); }
 .nov-card.nueva { box-shadow: 0 0 0 2px var(--primary); }
 .nov-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .nov-tag { font-size: 13px; font-weight: 800; }

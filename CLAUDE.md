@@ -14,6 +14,11 @@ en orden sobre la base). `datos_heas.json` se **genera**; no se edita a mano.
   Un código que no existe necesita Descripción (tal como figura en el sistema del hospital).
 - La columna `Fecha` (AAAA-MM-DD) es opcional: con fecha, el cambio sale en la campanita 🔔 de Novedades (se guarda en `novedades` de
   `datos_heas.json`, máx. 30, más recientes primero). En la app lo ya visto se recuerda en `heasDxNovVistas`. Para pedidos nuevos, poner siempre la fecha del día.
+  Un `AGREGAR` con fecha se anuncia aunque `fuente.csv` ya traiga ese código y grupo.
+- `AVISO,"Texto",,,AAAA-MM-DD` publica un aviso general en la campanita (tarjeta "📢 Aviso", sin código; no cambia datos).
+- Actualización completa: se reemplaza `datos/fuente.csv` entero con la lista vigente del sistema del hospital
+  (solo grupos de la tabla `ESP`, códigos con punto) y se anuncia con un `AVISO`. No anunciar uno por uno los cambios
+  masivos ni las correcciones. **No mencionar en la app, el repositorio ni los commits el nombre del sistema de origen.**
 - El nombre del grupo debe ser EXACTO (tabla `ESP` en `tools/generar_datos.py`).
 - Regenerar: `python3 tools/generar_datos.py datos/fuente.csv datos_heas.json`; subir CSV y JSON a `main`.
   Si solo se sube un CSV, la acción `.github/workflows/actualizar-datos.yml` regenera y publica el JSON sola.

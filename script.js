@@ -125,6 +125,15 @@ function abrirNovedades() {
   let fechaPrev = "";
   novedades.forEach((n) => {
     if (n.f !== fechaPrev) { el.novList.append(make("div", "nov-date", fechaLarga(n.f))); fechaPrev = n.f; }
+    if (n.t === "info") {  // aviso general (sin código)
+      const aviso = make("div", `nov-card info${vistas.has(novClave(n)) ? "" : " nueva"}`);
+      const topI = make("div", "nov-top");
+      topI.append(make("span", "nov-tag", "📢 Aviso"));
+      if (!vistas.has(novClave(n))) topI.append(make("span", "nov-new", "NUEVO"));
+      aviso.append(topI, make("p", "service-name", n.n));
+      el.novList.append(aviso);
+      return;
+    }
     const alta = n.t !== "baja";
     const card = make("button", `nov-card ${alta ? "alta" : "baja"}${vistas.has(novClave(n)) ? "" : " nueva"}`); card.type = "button";
     const top = make("div", "nov-top");

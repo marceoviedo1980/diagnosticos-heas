@@ -21,6 +21,8 @@ Los cambios del día a día se escriben en el archivo pequeño **`datos/cambios.
    - Código nuevo (hay que dar la descripción): `AGREGAR,Nombre del diagnóstico,Z99.9,CE - NEUROLOGÍA - SUS`
    - **Fecha** (opcional, `AAAA-MM-DD`): si la pones, el cambio aparece en la **campanita 🔔 Novedades** de la app
      (ej.: `AGREGAR,,T81.3,CE - GINECO - OBSTETRICIA - SUS,2026-11-19`). Sin fecha el cambio se aplica pero no se anuncia.
+   - **Aviso general** en la campanita (no cambia datos): `AVISO,"Texto del aviso",,,2026-11-23`
+     (el texto entre comillas si lleva comas; la fecha es obligatoria).
 3. **Commit changes**. En 1 o 2 minutos una acción automática genera `datos_heas.json` y lo publica.
    Si ves una ❌ en la pestaña **Actions**, abre el detalle: dice qué línea está mal (grupo mal escrito, acción
    desconocida, descripción faltante) y no se publica nada hasta corregirlo.
