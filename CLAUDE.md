@@ -23,7 +23,7 @@ en orden sobre la base). `datos_heas.json` se **genera**; no se edita a mano.
   El script genera `nh` en el JSON: los del catálogo sin servicio, con ámbito sugerido (`"ce,hosp"`, `"ext"` para causas
   externas V–Y, `""` sin sugerencia): 1) ámbitos de los habilitados de la misma categoría; 2) si no hay, los que tiene
   ≥ la mitad de los habilitados del bloque (letra + 1er dígito). En la app: bloque aparte en Buscar (solo diagnósticos,
-  con texto y sin filtros), cerrado salvo que no haya habilitados. Textos acordados: "CIE-10 no habilitados",
+  con texto y sin filtros), cerrado; si no hay ningún habilitado, las tarjetas van directo (sin barra ni aviso) para que se vean en la primera pantalla. Textos acordados: "CIE-10 no habilitados",
   "CIE-10 NO HABILITADO", "Sugerido: …" con los nombres de ámbito de la app (nunca "Mixto" ni "Ambulatorio"),
   "Puede solicitarse su habilitación en Farmacia." Sin sugerir especialidad y sin etiqueta de Productos SUS.
   En una actualización completa, regenerar también el catálogo con todos los CIE-10 del sistema (cualquier vigencia).

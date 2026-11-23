@@ -258,10 +258,19 @@ function renderNoHab(lista, terms, sinHabilitados) {
   el.nhWrap.innerHTML = "";
   if (!lista.length) { el.nhWrap.hidden = true; return; }
   el.nhWrap.hidden = false;
+  el.nhWrap.classList.toggle("solo", sinHabilitados);
   if (sinHabilitados) {
-    el.nhWrap.append(make("div", "nh-aviso", lista.length === 1
-      ? "Este diagnóstico no está habilitado en ningún servicio del HEAS. Puede solicitarse su habilitación en Farmacia."
-      : "Ningún diagnóstico habilitado coincide con su búsqueda. Estos CIE-10 existen, pero no están habilitados en ningún servicio del HEAS. Puede solicitarse su habilitación en Farmacia."));
+    // sin habilitados: las tarjetas van directo, sin barra ni aviso, para que se vean en la primera pantalla
+    const cont = make("div", "results");
+    lista.slice(0, state.nhShown).forEach((it) => cont.append(tarjetaNoHab(it, terms)));
+    el.nhWrap.append(cont);
+    if (lista.length > state.nhShown) {
+      const mas = make("button", "more-button", `Mostrar más (${Math.min(PAGE, lista.length - state.nhShown)} de ${lista.length - state.nhShown} restantes)`);
+      mas.type = "button";
+      mas.addEventListener("click", () => { state.nhShown += PAGE; renderNoHab(lista, terms, sinHabilitados); });
+      el.nhWrap.append(mas);
+    }
+    return;
   }
   const toggle = make("button", "nh-toggle"); toggle.type = "button";
   toggle.setAttribute("aria-expanded", String(state.nhOpen));
@@ -297,7 +306,9 @@ function renderBuscar(append = false) {
   if (nh) { state.nhOpen = res.length === 0; renderNoHab(nh, terms, res.length === 0); }
   el.counter.textContent = res.length
     ? `${res.length.toLocaleString("es")} ${tipoTxt}${res.length === 1 ? "" : "s"} encontrado${res.length === 1 ? "" : "s"}.`
-    : (nh && nh.length ? "0 diagnósticos habilitados." : "0 resultados.");
+    : (nh && nh.length
+      ? `Ningún diagnóstico habilitado. Encontrado${nh.length === 1 ? "" : "s"} como CIE-10 no habilitado${nh.length === 1 ? "" : "s"}${nh.length === 1 ? "" : ` (${nh.length.toLocaleString("es")})`}:`
+      : "0 resultados.");
   if (!res.length && nh && nh.length) { el.results.innerHTML = ""; el.more.hidden = true; return; }
   if (!res.length) {
     el.results.innerHTML = "";
