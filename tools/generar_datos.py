@@ -180,10 +180,62 @@ def main(src, dst):
             continue  # el error de grupo ya se informa más arriba
         nov.append({"f": fecha, "t": acc, "c": sigla, "n": nombres[sigla].most_common(1)[0][0] if nombres.get(sigla) else desc, "a": a, "e": e})
     nov.sort(key=lambda x: x["f"], reverse=True)  # más recientes primero (orden estable)
-    datos = {"version": datetime.date.today().isoformat(), "servicios": servicios, "items": items, "novedades": nov[:30]}
+    nh = no_habilitados(os.path.join(os.path.dirname(os.path.abspath(src)), "cie10_catalogo.csv"), items, servicios)
+    datos = {"version": datetime.date.today().isoformat(), "servicios": servicios, "items": items, "novedades": nov[:30], "nh": nh}
     with open(dst, "w", encoding="utf-8") as f:
         json.dump(datos, f, ensure_ascii=False, separators=(",", ":"))
-    print(f"{len(filas)} filas -> {len(items)} códigos, {len(servicios)} servicios, {len(nov)} novedades -> {dst}")
+    print(f"{len(filas)} filas -> {len(items)} códigos, {len(servicios)} servicios, {len(nov)} novedades, "
+          f"{len(nh)} CIE-10 no habilitados -> {dst}")
+
+ES_DX = re.compile(r"^[A-Z]\d{2}(\.[0-9A-Z])?$")
+ORDEN_AMB = [CE, HOSP, EMERG, UTI]  # los servicios de apoyo no cuentan para el ámbito sugerido
+
+def no_habilitados(ruta, items, servicios):
+    """datos/cie10_catalogo.csv (Descripción,Sigla): todos los CIE-10 cargados en el sistema del hospital.
+    Los que no tienen ningún servicio en la PWA salen como "CIE-10 no habilitados", con un ámbito SUGERIDO:
+      1) por parentesco: ámbitos de los códigos habilitados de la misma categoría (3 caracteres);
+      2) si no hay: ámbitos que tiene al menos la mitad de los habilitados del bloque (letra + 1er dígito);
+      3) V, W, X, Y = causas externas ("ext"); sin base = "" (sin sugerencia).
+    Devuelve [[codigo, descripcion, "ce,hosp" | "ext" | ""], ...]."""
+    if not os.path.exists(ruta):
+        return []
+    catalogo = {}
+    for desc, sigla in _leer_catalogo(ruta):
+        catalogo.setdefault(sigla, desc)
+    amb_de = {}
+    for c, _n, gs in items:
+        if ES_DX.match(c):
+            amb_de[c] = {servicios[g]["a"] for g in gs}
+    por_cat, por_bloque = collections.defaultdict(set), collections.defaultdict(list)
+    for c, a in amb_de.items():
+        por_cat[c[:3]] |= a
+        por_bloque[c[:2]].append(a)
+    salida = []
+    for c in sorted(set(catalogo) - set(amb_de)):
+        if c[0] in "VWXY":
+            sug = "ext"
+        else:
+            a = [k for k in ORDEN_AMB if k in por_cat.get(c[:3], set())]
+            if not a and por_bloque.get(c[:2]):
+                b = por_bloque[c[:2]]
+                a = [k for k in ORDEN_AMB if sum(k in x for x in b) * 2 >= len(b)]
+            sug = ",".join(a)
+        salida.append([c, catalogo[c], sug])
+    return salida
+
+def _leer_catalogo(ruta):
+    with open(ruta, newline="", encoding="utf-8-sig") as f:
+        lector = csv.reader(f)
+        next(lector, None)
+        for n, r in enumerate(lector, start=2):
+            if not r or not any((x or "").strip() for x in r):
+                continue
+            desc = re.sub(r"\s+", " ", (r[0] if len(r) > 0 else "")).strip()
+            sigla = re.sub(r"\s+", "", (r[1] if len(r) > 1 else "")).upper()
+            if not desc or not ES_DX.match(sigla):
+                print(f"ERROR cie10_catalogo.csv fila {n}: descripción vacía o código no válido {sigla!r}", file=sys.stderr)
+                sys.exit(1)
+            yield desc, sigla
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:

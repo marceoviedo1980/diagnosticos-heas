@@ -28,6 +28,13 @@ Los cambios del día a día se escriben en el archivo pequeño **`datos/cambios.
    desconocida, descripción faltante) y no se publica nada hasta corregirlo.
 4. La app muestra los datos nuevos pocos minutos después.
 
+### CIE-10 no habilitados
+`datos/cie10_catalogo.csv` (`Descripción,Sigla`) tiene todos los CIE-10 cargados en el sistema del hospital.
+Los que no tienen ningún servicio salen en la app, al buscar diagnósticos por texto, en un bloque aparte
+"CIE-10 no habilitados" (cerrado; se abre solo si no hay ningún habilitado), con un ámbito **sugerido** calculado
+por el script a partir de los códigos habilitados de la misma categoría o del mismo bloque. No aparecen con filtros
+de ámbito o especialidad, en "Por especialidad" ni en Procedimientos.
+
 Los cambios se aplican en orden, de arriba hacia abajo, sobre `fuente.csv`. Se quedan escritos en el archivo
 (sirve de historial). Uso local: `python3 tools/generar_datos.py datos/fuente.csv datos_heas.json`.
 

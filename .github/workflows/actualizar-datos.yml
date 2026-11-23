@@ -3,7 +3,7 @@ name: Actualizar datos
 on:
   push:
     branches: [main]
-    paths: ["datos/fuente.csv", "datos/cambios.csv"]
+    paths: ["datos/fuente.csv", "datos/cambios.csv", "datos/cie10_catalogo.csv", "tools/generar_datos.py"]
   workflow_dispatch:
 permissions:
   contents: write

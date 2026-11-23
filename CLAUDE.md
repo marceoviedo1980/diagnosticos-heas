@@ -19,6 +19,14 @@ en orden sobre la base). `datos_heas.json` se **genera**; no se edita a mano.
 - Actualización completa: se reemplaza `datos/fuente.csv` entero con la lista vigente del sistema del hospital
   (solo grupos de la tabla `ESP`, códigos con punto) y se anuncia con un `AVISO`. No anunciar uno por uno los cambios
   masivos ni las correcciones. **No mencionar en la app, el repositorio ni los commits el nombre del sistema de origen.**
+- **CIE-10 no habilitados:** `datos/cie10_catalogo.csv` (`Descripción,Sigla`, todos los CIE-10 del sistema del hospital).
+  El script genera `nh` en el JSON: los del catálogo sin servicio, con ámbito sugerido (`"ce,hosp"`, `"ext"` para causas
+  externas V–Y, `""` sin sugerencia): 1) ámbitos de los habilitados de la misma categoría; 2) si no hay, los que tiene
+  ≥ la mitad de los habilitados del bloque (letra + 1er dígito). En la app: bloque aparte en Buscar (solo diagnósticos,
+  con texto y sin filtros), cerrado salvo que no haya habilitados. Textos acordados: "CIE-10 no habilitados",
+  "CIE-10 NO HABILITADO", "Sugerido: …" con los nombres de ámbito de la app (nunca "Mixto" ni "Ambulatorio"),
+  "Puede solicitarse su habilitación en Farmacia." Sin sugerir especialidad y sin etiqueta de Productos SUS.
+  En una actualización completa, regenerar también el catálogo con todos los CIE-10 del sistema (cualquier vigencia).
 - El nombre del grupo debe ser EXACTO (tabla `ESP` en `tools/generar_datos.py`).
 - Regenerar: `python3 tools/generar_datos.py datos/fuente.csv datos_heas.json`; subir CSV y JSON a `main`.
   Si solo se sube un CSV, la acción `.github/workflows/actualizar-datos.yml` regenera y publica el JSON sola.

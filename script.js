@@ -20,8 +20,9 @@ const AMB = Object.fromEntries(AMBITOS.map((a) => [a.k, a]));
 let servicios = [];   // [{a, e}]
 let items = [];       // {c, n, g[], t, h, l}
 let novedades = [];   // [{f, t:"alta"|"baja", c, n, a, e}]
+let noHab = [];       // CIE-10 no habilitados: {c, n, s, h, s2}  (s = "ce,hosp" | "ext" | "")
 let state = {
-  tipo: "dx", ambito: "", esp: "", query: "", shown: PAGE,
+  tipo: "dx", ambito: "", esp: "", query: "", shown: PAGE, nhOpen: false, nhShown: PAGE,
   eView: null, eAmb: "", eTipo: "dx", eQuery: "", eLetter: "", eShown: PAGE
 };
 let searchTimer = null;
@@ -33,7 +34,7 @@ const el = {
   form: $("#searchForm"), input: $("#searchInput"), clear: $("#clearButton"),
   recentBlock: $("#recentBlock"), recentList: $("#recentList"),
   tipoSwitch: $("#tipoSwitch"), ambitoFilters: $("#ambitoFilters"), espSelect: $("#espSelect"),
-  counter: $("#resultCounter"), dataStatus: $("#dataStatus"), results: $("#results"), more: $("#moreBuscar"),
+  counter: $("#resultCounter"), dataStatus: $("#dataStatus"), results: $("#results"), more: $("#moreBuscar"), nhWrap: $("#nhWrap"),
   espGridWrap: $("#espGridWrap"), espGrid: $("#espGrid"), espDetail: $("#espDetail"), backEsp: $("#backEsp"),
   espTitle: $("#espTitle"), espAmbTabs: $("#espAmbTabs"), tipoSwitchEsp: $("#tipoSwitchEsp"),
   espSearch: $("#espSearch"), espClear: $("#espClear"), espLetters: $("#espLetters"),
@@ -86,6 +87,9 @@ function prepararDatos(json) {
     c, n, g, t: esCodigoDx(c) ? "dx" : "pr", h: normalize(c + " " + n), l: c[0], s: normalize(n).replace(/^[^a-z0-9]+/, "")
   }));
   novedades = Array.isArray(json.novedades) ? json.novedades : [];
+  noHab = (Array.isArray(json.nh) ? json.nh : []).map(([c, n, s]) => ({
+    c, n, s: s || "", t: "dx", h: normalize(c + " " + n), s2: normalize(n).replace(/^[^a-z0-9]+/, "")
+  }));
   el.version.textContent = `Datos actualizados: ${json.version} · ${items.length.toLocaleString("es")} registros`;
 }
 async function cargarDatos() {
@@ -219,20 +223,82 @@ function tarjeta(item, terms, espFiltro) {
   return card;
 }
 
+/* ---------- CIE-10 no habilitados (bloque aparte, solo en Buscar con texto) ---------- */
+function consultarNoHab(query) {
+  const q = normalize(query);
+  const terms = q.split(/\s+/).filter(Boolean);
+  if (!terms.length) return [];
+  const res = noHab.filter((it) => terms.every((t) => it.h.includes(t)));
+  const sc = new Map(res.map((it) => [it, puntaje(it, q, terms)]));
+  return res.sort((a, b) => sc.get(a) - sc.get(b) || a.s2.localeCompare(b.s2, "es"));
+}
+function textoSugerido(s) {
+  if (s === "ext") return "Causa externa: se registra junto al diagnóstico de la lesión";
+  const nombres = s.split(",").filter((k) => AMB[k]).map((k) => AMB[k].label);
+  if (!nombres.length) return "Sin sugerencia";
+  const lista = nombres.length === 1 ? nombres[0] : nombres.slice(0, -1).join(", ") + " y " + nombres[nombres.length - 1];
+  return "Sugerido: " + lista;
+}
+function tarjetaNoHab(item, terms) {
+  const card = make("article", "result-card nh");
+  card.append(make("div", "code-badge", item.c));
+  const cuerpo = make("div", "nh-body");
+  const nombre = make("p", "service-name");
+  nombre.append(highlight(item.n, terms));
+  cuerpo.append(nombre, make("span", "nh-label", "CIE-10 NO HABILITADO"));
+  const blocks = make("div", "amb-blocks");
+  const row = make("div", "amb-row");
+  row.append(make("span", "nh-sug", textoSugerido(item.s)));
+  blocks.append(row);
+  cuerpo.append(blocks);
+  card.append(cuerpo, make("div", "nh-pie", "Puede solicitarse su habilitación en Farmacia."));
+  return card;
+}
+function renderNoHab(lista, terms, sinHabilitados) {
+  el.nhWrap.innerHTML = "";
+  if (!lista.length) { el.nhWrap.hidden = true; return; }
+  el.nhWrap.hidden = false;
+  if (sinHabilitados) {
+    el.nhWrap.append(make("div", "nh-aviso", lista.length === 1
+      ? "Este diagnóstico no está habilitado en ningún servicio del HEAS. Puede solicitarse su habilitación en Farmacia."
+      : "Ningún diagnóstico habilitado coincide con su búsqueda. Estos CIE-10 existen, pero no están habilitados en ningún servicio del HEAS. Puede solicitarse su habilitación en Farmacia."));
+  }
+  const toggle = make("button", "nh-toggle"); toggle.type = "button";
+  toggle.setAttribute("aria-expanded", String(state.nhOpen));
+  toggle.append(make("span", "", `CIE-10 no habilitados (${lista.length.toLocaleString("es")})`), make("span", "nh-flecha", state.nhOpen ? "▾ ocultar" : "▸ ver"));
+  toggle.addEventListener("click", () => { state.nhOpen = !state.nhOpen; state.nhShown = PAGE; renderNoHab(lista, terms, sinHabilitados); });
+  el.nhWrap.append(toggle);
+  if (!state.nhOpen) return;
+  const cont = make("div", "results");
+  lista.slice(0, state.nhShown).forEach((it) => cont.append(tarjetaNoHab(it, terms)));
+  el.nhWrap.append(cont);
+  if (lista.length > state.nhShown) {
+    const mas = make("button", "more-button", `Mostrar más (${Math.min(PAGE, lista.length - state.nhShown)} de ${lista.length - state.nhShown} restantes)`);
+    mas.type = "button";
+    mas.addEventListener("click", () => { state.nhShown += PAGE; renderNoHab(lista, terms, sinHabilitados); });
+    el.nhWrap.append(mas);
+  }
+}
+
 /* ---------- vista BUSCAR ---------- */
 function renderBuscar(append = false) {
   const hayFiltro = state.query.trim() || state.ambito || state.esp;
-  if (!append) { el.results.innerHTML = ""; state.shown = PAGE; }
+  if (!append) { el.results.innerHTML = ""; state.shown = PAGE; state.nhShown = PAGE; }
   if (!items.length) { el.counter.textContent = "Los datos aún se están cargando."; return; }
+  // los no habilitados solo aparecen al buscar diagnósticos por texto, sin filtros de ámbito/especialidad
+  const nh = (!append && state.tipo === "dx" && !state.ambito && !state.esp) ? consultarNoHab(state.query) : null;
+  if (!append) { el.nhWrap.innerHTML = ""; el.nhWrap.hidden = true; }
   if (!hayFiltro) {
     el.results.append(make("div", "empty-state", "Escriba un diagnóstico, procedimiento o código; o elija un ámbito o una especialidad para explorar."));
     el.counter.textContent = "Sin búsqueda activa."; el.more.hidden = true; return;
   }
   const { res, terms } = consultar(state.query, state.tipo, state.ambito, state.esp);
   const tipoTxt = state.tipo === "dx" ? "diagnóstico" : "procedimiento";
+  if (nh) { state.nhOpen = res.length === 0; renderNoHab(nh, terms, res.length === 0); }
   el.counter.textContent = res.length
     ? `${res.length.toLocaleString("es")} ${tipoTxt}${res.length === 1 ? "" : "s"} encontrado${res.length === 1 ? "" : "s"}.`
-    : "0 resultados.";
+    : (nh && nh.length ? "0 diagnósticos habilitados." : "0 resultados.");
+  if (!res.length && nh && nh.length) { el.results.innerHTML = ""; el.more.hidden = true; return; }
   if (!res.length) {
     el.results.innerHTML = "";
     const otro = consultar(state.query, state.tipo === "dx" ? "pr" : "dx", state.ambito, state.esp).res.length;
